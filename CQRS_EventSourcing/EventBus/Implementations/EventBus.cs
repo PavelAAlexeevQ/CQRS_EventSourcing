@@ -5,11 +5,11 @@ using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventBus.Implementations;
 
-public class EventQueue : IEventQueue
+public class EventBus : IEventBus
 {
     private Queue<IEvent> _eventQueue;
 
-    public EventQueue()
+    public EventBus()
     {
         _eventQueue = new Queue<IEvent>();
     }

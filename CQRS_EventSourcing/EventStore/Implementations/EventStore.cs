@@ -7,12 +7,12 @@ namespace CQRS_EventSourcing.EventStore.Implementations;
 
 public class EventStore : IEventStore
 {
-    private readonly IEventQueue _eventQueue;
+    private readonly IEventBus _eventBus;
     private readonly List<IEvent> _eventStore = new List<IEvent>();
     
-    public EventStore(IEventQueue eventQueue)
+    public EventStore(IEventBus eventBus)
     {
-        _eventQueue = eventQueue;
+        _eventBus = eventBus;
     }
 
 
@@ -29,7 +29,7 @@ public class EventStore : IEventStore
     
     private void SendEvent(IEvent e)
     {
-        _eventQueue.SendEvent(e);
+        _eventBus.SendEvent(e);
     }
 
 }

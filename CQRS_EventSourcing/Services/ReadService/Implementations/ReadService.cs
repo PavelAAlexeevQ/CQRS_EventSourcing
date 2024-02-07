@@ -10,14 +10,14 @@ namespace CQRS_EventSourcing.ReadService.Implementations;
 
 public class ReadService : IReadService
 {
-    private IEventQueue _eventQueue;
+    private IEventBus _eventBus;
     private Queue<IEvent> _events;
     private List<IModifySubstanceAmountEvent> _substanceAmountEvents;
-    public ReadService(IEventQueue eventQueue)
+    public ReadService(IEventBus eventBus)
     {
-        _eventQueue = eventQueue;
-        eventQueue.EventReceived += OnEventReceived;
-        _events = eventQueue.GetAllEvents();
+        _eventBus = eventBus;
+        _eventBus.EventReceived += OnEventReceived;
+        _events = _eventBus.GetAllEvents();
         _substanceAmountEvents = _events.Where(x => x is IModifySubstanceAmountEvent)
             .Select(x => (IModifySubstanceAmountEvent)x).ToList();
     }

@@ -5,11 +5,17 @@ using CQRS_EventSourcing.Events.Interfaces;
 namespace CQRS_EventSourcing.EventBus.Interfaces;
 
 public delegate void EventHandlerWithArg(object? sender, EventReceivedArg e);
-public interface IEventQueue
+
+// Event Bus model
+public interface IEventBus
 { 
+    // send event to the bus by Command Service 
     void SendEvent(IEvent e);
 
+    // get all events by Query Service
     Queue<IEvent> GetAllEvents();
+
+    //event to which Query Service should subscribe to get events
     event EventHandlerWithArg EventReceived;
 }
 
