@@ -7,7 +7,12 @@ namespace CQRS_EventSourcing.EventBus.Implementations;
 
 public class EventQueue : IEventQueue
 {
-    private Queue<IEvent> _eventQueue = new Queue<IEvent>();
+    private Queue<IEvent> _eventQueue;
+
+    public EventQueue()
+    {
+        _eventQueue = new Queue<IEvent>();
+    }
     
     public void SendEvent(IEvent e)
     {

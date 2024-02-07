@@ -5,7 +5,7 @@ using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventStore.Implementations;
 
-public class EventStore : IEventReader, IEventWriter
+public class EventStore : IEventStore
 {
     private readonly IEventQueue _eventQueue;
     private readonly List<IEvent> _eventStore = new List<IEvent>();
@@ -27,7 +27,7 @@ public class EventStore : IEventReader, IEventWriter
         SendEvent(e);
     }
     
-    protected void SendEvent(IEvent e)
+    private void SendEvent(IEvent e)
     {
         _eventQueue.SendEvent(e);
     }

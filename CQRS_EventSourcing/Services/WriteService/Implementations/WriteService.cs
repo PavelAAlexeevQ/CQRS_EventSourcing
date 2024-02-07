@@ -7,15 +7,15 @@ namespace CQRS_EventSourcing.WriteService.Implementations;
 
 public class WriteService : IWriteService
 {
-    private IEventWriter _writer; 
-    public WriteService(IEventWriter writer)
+    private IEventStore _storeWriter; 
+    public WriteService(IEventStore storeWriter)
     {
-        _writer = writer;
+        _storeWriter = storeWriter;
     }
     
     public void SetAmountDiff(int amountDiff, DateTime actionDate)
     {
         var modifyAmountEvent = new ModifySubstanceAmountEvent(amountDiff, actionDate);
-        _writer.AddEvent(modifyAmountEvent);    
+        _storeWriter.AddEvent(modifyAmountEvent);    
     }
 }
