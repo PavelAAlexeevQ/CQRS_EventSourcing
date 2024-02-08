@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.EventBus.Implementations;
@@ -19,19 +20,21 @@ class CQRS_EventSourcingModel
             .AddSingleton<IEventBusSender>(x => x.GetRequiredService<EventBus>())
             .AddSingleton<IEventBusReceiver>(x => x.GetRequiredService<EventBus>())
             .AddSingleton<IEventStore, EventStore>()
-            .AddSingleton<IReadService, ReadService>()
             .AddSingleton<IWriteService, WriteService>()
             .BuildServiceProvider();
 
         
         // get one 
         var commandService = serviceProvider.GetService<IWriteService>();
-        var queryService = serviceProvider.GetService<IReadService>();
-        if (commandService == null || queryService == null)
+        var eventBusReceiver = serviceProvider.GetService<IEventBusReceiver>();
+        if (commandService == null || eventBusReceiver == null)
         {
             Console.WriteLine("Something wrong with my DI");
             return -1;
         }
+
+        var queryService1 = new ReadService(eventBusReceiver);
+        var queryService2 = new ReadService(eventBusReceiver);
 
         var rand = new Random();
         for (var i = 100; i > 0; i--)
@@ -40,12 +43,22 @@ class CQRS_EventSourcingModel
             commandService.SetAmountDiff(amountDiff, DateTime.Now.AddDays(-i));
         }
 
-        var latestAmount = queryService.GetLatestAmount();
-        Console.WriteLine($"Current amount of a substance is: {latestAmount}");
-        var usedAmount =
-            Math.Abs(queryService.GetPrecessedAmountForPeriod(from: DateTime.Now.AddDays(-100), to: DateTime.Now));
-        Console.WriteLine($"Used amount of a substance during last 100 days: {usedAmount}");
+        var latestAmount1 = queryService1.GetLatestAmount();
+        Console.WriteLine($"Service1: Current amount of a substance is: {latestAmount1}");
+        var usedAmount1 =
+            Math.Abs(queryService1.GetPrecessedAmountForPeriod(from: DateTime.Now.AddDays(-100), to: DateTime.Now));
+        Console.WriteLine($"Service1: Used amount of a substance during last 100 days: {usedAmount1}");
 
+        var latestAmount2 = queryService2.GetLatestAmount();
+        Console.WriteLine($"Service2: Current amount of a substance is: {latestAmount2}");
+        var usedAmount2 =
+            Math.Abs(queryService2.GetPrecessedAmountForPeriod(from: DateTime.Now.AddDays(-100), to: DateTime.Now));
+        Console.WriteLine($"Service2: Used amount of a substance during last 100 days: {usedAmount2}");
+
+        if (latestAmount1 != latestAmount2 || usedAmount1 != usedAmount2)
+        {
+            Console.Error.WriteLine("Our proof of concept is failed :(");
+        }
         return 0;
     }
 }
