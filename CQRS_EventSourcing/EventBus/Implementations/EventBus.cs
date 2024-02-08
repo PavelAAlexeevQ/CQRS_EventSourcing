@@ -1,13 +1,11 @@
-﻿using System.Collections.ObjectModel;
-
-using CQRS_EventSourcing.EventBus.Interfaces;
+﻿using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventBus.Implementations;
 
 public class EventBus : IEventBusSender, IEventBusReceiver
 {
-    private Queue<IEvent> _eventQueue;
+    private readonly Queue<IEvent> _eventQueue;
 
     public EventBus()
     {
@@ -25,5 +23,5 @@ public class EventBus : IEventBusSender, IEventBusReceiver
         return _eventQueue;
     }
     
-    public event EventHandlerWithArg EventReceived;
+    public event EventHandlerWithArg? EventReceived;
 }

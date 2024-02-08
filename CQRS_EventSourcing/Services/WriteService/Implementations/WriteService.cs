@@ -1,13 +1,12 @@
 ﻿using CQRS_EventSourcing.EventStore.Interfaces;
-using CQRS_EventSourcing.WriteService.Interfaces;
-
+using CQRS_EventSourcing.Services.WriteService.Interfaces;
 using CQRS_EventSourcing.Events.Implementations;
 
-namespace CQRS_EventSourcing.WriteService.Implementations;
+namespace CQRS_EventSourcing.Services.WriteService.Implementations;
 
 public class WriteService : IWriteService
 {
-    private IEventStore _storeWriter; 
+    private readonly IEventStore _storeWriter; 
     public WriteService(IEventStore storeWriter)
     {
         _storeWriter = storeWriter;

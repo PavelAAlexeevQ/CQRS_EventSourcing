@@ -4,10 +4,10 @@ using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.EventBus.Implementations;
 using CQRS_EventSourcing.EventStore.Interfaces;
 using CQRS_EventSourcing.EventStore.Implementations;
-using CQRS_EventSourcing.ReadService.Interfaces;
-using CQRS_EventSourcing.ReadService.Implementations;
-using CQRS_EventSourcing.WriteService.Interfaces;
-using CQRS_EventSourcing.WriteService.Implementations;
+using CQRS_EventSourcing.Services.ReadService.Interfaces;
+using CQRS_EventSourcing.Services.ReadService.Implementations;
+using CQRS_EventSourcing.Services.WriteService.Interfaces;
+using CQRS_EventSourcing.Services.WriteService.Implementations;
 
 class CQRS_EventSourcingModel
 {

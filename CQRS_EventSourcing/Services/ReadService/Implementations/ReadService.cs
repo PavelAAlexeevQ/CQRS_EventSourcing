@@ -1,33 +1,32 @@
 ﻿using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
-using CQRS_EventSourcing.EventStore.Interfaces;
-using CQRS_EventSourcing.WriteService.Interfaces;
 
-using CQRS_EventSourcing.ReadService.Interfaces;
+using CQRS_EventSourcing.Services.ReadService.Interfaces;
 
-namespace CQRS_EventSourcing.ReadService.Implementations;
-
+namespace CQRS_EventSourcing.Services.ReadService.Implementations;
 
 public class ReadService : IReadService
 {
-    private IEventBusReceiver _eventBus;
-    private Queue<IEvent> _events;
-    private List<IModifySubstanceAmountEvent> _substanceAmountEvents;
+    private readonly IEventBusReceiver _eventBus;
+    private readonly Queue<IEvent> _events;
+    
+    //materialized view with filtered IModifySubstanceAmountEvent-s
+    private readonly List<IModifySubstanceAmountEvent> _substanceAmountEvents;
     public ReadService(IEventBusReceiver eventBus)
     {
         _eventBus = eventBus;
         _eventBus.EventReceived += OnEventReceived;
         _events = _eventBus.GetAllEvents();
-        _substanceAmountEvents = _events.Where(x => x is IModifySubstanceAmountEvent)
-            .Select(x => (IModifySubstanceAmountEvent)x).ToList();
+        _substanceAmountEvents = _events.OfType<IModifySubstanceAmountEvent>().ToList();
     }
 
     private void OnEventReceived(object? sender, EventReceivedArg arg)
     {
         _events.Enqueue(arg.EventVal);
-        if (arg.EventVal is IModifySubstanceAmountEvent)
+        var modifySubstanceAmountEvent = arg.EventVal as IModifySubstanceAmountEvent;
+        if (modifySubstanceAmountEvent != null)
         {
-            _substanceAmountEvents.Add((IModifySubstanceAmountEvent)arg.EventVal);
+            _substanceAmountEvents.Add(modifySubstanceAmountEvent);
         }
     }
     

@@ -1,4 +1,4 @@
-﻿namespace CQRS_EventSourcing.ReadService.Interfaces;
+﻿namespace CQRS_EventSourcing.Services.ReadService.Interfaces;
 
 // Read Service, or Query Service
 public interface IReadService

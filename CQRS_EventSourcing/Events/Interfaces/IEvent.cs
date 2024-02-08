@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CQRS_EventSourcing.Events.Interfaces;
+﻿namespace CQRS_EventSourcing.Events.Interfaces;
 
 // generic event
 public interface IEvent

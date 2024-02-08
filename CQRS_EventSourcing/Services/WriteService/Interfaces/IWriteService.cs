@@ -1,4 +1,4 @@
-﻿namespace CQRS_EventSourcing.WriteService.Interfaces;
+﻿namespace CQRS_EventSourcing.Services.WriteService.Interfaces;
 
 // Write Service, or Command Service
 public interface IWriteService

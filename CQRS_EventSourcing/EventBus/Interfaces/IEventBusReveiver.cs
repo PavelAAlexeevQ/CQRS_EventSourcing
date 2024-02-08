@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using CQRS_EventSourcing.Events.Interfaces;
+﻿using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventBus.Interfaces;
 
