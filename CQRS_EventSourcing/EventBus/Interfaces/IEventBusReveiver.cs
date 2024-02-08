@@ -6,19 +6,16 @@ namespace CQRS_EventSourcing.EventBus.Interfaces;
 
 public delegate void EventHandlerWithArg(object? sender, EventReceivedArg e);
 
-// Event Bus model
-public interface IEventBus
-{ 
-    // send event to the bus by Command Service 
-    void SendEvent(IEvent e);
+// Event Bus model, receiver
 
-    // get all events by Query Service
+public interface IEventBusReceiver
+{
+// get all events by Query Service
     Queue<IEvent> GetAllEvents();
 
     //event to which Query Service should subscribe to get events
     event EventHandlerWithArg EventReceived;
 }
-
 public class EventReceivedArg : EventArgs
 {
     public EventReceivedArg(IEvent ev)

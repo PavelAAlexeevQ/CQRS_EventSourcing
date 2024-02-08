@@ -5,7 +5,7 @@ using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventBus.Implementations;
 
-public class EventBus : IEventBus
+public class EventBus : IEventBusSender, IEventBusReceiver
 {
     private Queue<IEvent> _eventQueue;
 

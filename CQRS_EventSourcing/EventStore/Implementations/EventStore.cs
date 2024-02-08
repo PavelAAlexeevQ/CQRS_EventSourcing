@@ -7,10 +7,10 @@ namespace CQRS_EventSourcing.EventStore.Implementations;
 
 public class EventStore : IEventStore
 {
-    private readonly IEventBus _eventBus;
+    private readonly IEventBusSender _eventBus;
     private readonly List<IEvent> _eventStore = new List<IEvent>();
     
-    public EventStore(IEventBus eventBus)
+    public EventStore(IEventBusSender eventBus)
     {
         _eventBus = eventBus;
     }

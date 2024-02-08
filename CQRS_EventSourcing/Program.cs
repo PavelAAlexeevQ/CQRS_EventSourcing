@@ -15,7 +15,9 @@ class CQRS_EventSourcingModel
     {
         //setup all our services
         var serviceProvider = new ServiceCollection()
-            .AddSingleton<IEventBus, EventBus>()
+            .AddSingleton<EventBus>()
+            .AddSingleton<IEventBusSender>(x => x.GetRequiredService<EventBus>())
+            .AddSingleton<IEventBusReceiver>(x => x.GetRequiredService<EventBus>())
             .AddSingleton<IEventStore, EventStore>()
             .AddSingleton<IReadService, ReadService>()
             .AddSingleton<IWriteService, WriteService>()
