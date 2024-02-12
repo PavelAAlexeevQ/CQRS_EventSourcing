@@ -1,18 +1,17 @@
 ﻿using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
+using CQRS_EventSourcing.Services.QueryService.Interfaces;
 
-using CQRS_EventSourcing.Services.ReadService.Interfaces;
+namespace CQRS_EventSourcing.Services.QueryService.Implementations;
 
-namespace CQRS_EventSourcing.Services.ReadService.Implementations;
-
-public class ReadService : IReadService
+public class QueryService : IQueryService
 {
     private readonly IEventBusReceiver _eventBus;
     private readonly Queue<IEvent> _events;
     
     //materialized view with filtered IModifySubstanceAmountEvent-s
     private readonly List<IModifySubstanceAmountEvent> _substanceAmountEvents;
-    public ReadService(IEventBusReceiver eventBus)
+    public QueryService(IEventBusReceiver eventBus)
     {
         _eventBus = eventBus;
         _eventBus.EventReceived += OnEventReceived;

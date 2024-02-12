@@ -1,7 +1,7 @@
-﻿namespace CQRS_EventSourcing.Services.ReadService.Interfaces;
+﻿namespace CQRS_EventSourcing.Services.QueryService.Interfaces;
 
-// Read Service, or Query Service
-public interface IReadService
+// Query Service
+public interface IQueryService
 {
     // calculate amount of a substance at the current moment by collecting all related events
     int GetLatestAmount();
