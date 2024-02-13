@@ -8,38 +8,58 @@ public class QueryService : IQueryService
 {
     private readonly IEventBusReceiver _eventBus;
     private readonly Queue<IEvent> _events;
+    private readonly IAsyncEnumerable<IEvent> _eventsReceiver;
+    private readonly CancellationToken _cancelReciever;
     
     //materialized view with filtered IModifySubstanceAmountEvent-s
     private readonly List<IModifySubstanceAmountEvent> _substanceAmountEvents;
     public QueryService(IEventBusReceiver eventBus)
     {
         _eventBus = eventBus;
-        _eventBus.EventReceived += OnEventReceived;
-        _events = _eventBus.GetAllEvents();
-        _substanceAmountEvents = _events.OfType<IModifySubstanceAmountEvent>().ToList();
+        _eventsReceiver = _eventBus.GetEvents();
+        _events = new Queue<IEvent>();
+        _substanceAmountEvents = new List<IModifySubstanceAmountEvent>();
+        EventsReceiverProcedure();
     }
 
-    private void OnEventReceived(object? sender, EventReceivedArg arg)
+    private void EventsReceiverProcedure()
     {
-        _events.Enqueue(arg.EventVal);
-        var modifySubstanceAmountEvent = arg.EventVal as IModifySubstanceAmountEvent;
-        if (modifySubstanceAmountEvent != null)
+        var receiverTask = Task.Run(async () =>
         {
-            _substanceAmountEvents.Add(modifySubstanceAmountEvent);
-        }
+            await foreach (var receivedEvent in _eventsReceiver)
+            {
+                lock (_events)
+                {
+                    _events.Enqueue(receivedEvent);                    
+                }
+
+                var modifySubstanceAmountEvent = receivedEvent as IModifySubstanceAmountEvent;
+                if (modifySubstanceAmountEvent != null)
+                {
+                    lock (_substanceAmountEvents)
+                    {
+                        _substanceAmountEvents.Add(modifySubstanceAmountEvent);
+                    }
+                }
+            }
+        });
     }
     
     public int GetLatestAmount()
     {
-        return _substanceAmountEvents.Sum(x => x.Amount);
+        lock (_substanceAmountEvents)
+        {
+            return _substanceAmountEvents.Sum(x => x.Amount);
+        }
     }
 
     public int GetPrecessedAmountForPeriod(DateTime from, DateTime to)
     {
-        return _substanceAmountEvents.Where(x => x.Date >= from && x.Date <= to)
-            .Where(x => x.Amount < 0)
-            .Sum(x => x.Amount);
+        lock (_substanceAmountEvents)
+        {
+            return _substanceAmountEvents.Where(x => x.Date >= from && x.Date <= to)
+                .Where(x => x.Amount < 0)
+                .Sum(x => x.Amount);
+        }
     }
-    
-    
 }

@@ -27,12 +27,13 @@ class CQRS_EventSourcingModel
             var commandService = scope.Resolve<ICommandService>();
             var queryService1 = scope.Resolve<IQueryService>();
             var rand = new Random();
+
             for (var i = 100; i > 0; i--)
             {
                 var amountDiff = rand.Next(1000) - 500;
                 commandService.SetAmountDiff(amountDiff, DateTime.Now.AddDays(-i));
             }
-
+            Thread.Sleep(3000);
             var latestAmount1 = queryService1.GetLatestAmount();
             Console.WriteLine($"Service1: Current amount of a substance is: {latestAmount1}");
             var usedAmount1 =
