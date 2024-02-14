@@ -6,31 +6,42 @@ namespace CQRS_EventSourcing.Services.QueryService.Implementations;
 
 public class QueryService : IQueryService
 {
+    // Query Service depends on EventBus service to receive messages
     private readonly IEventBusReceiver _eventBus;
-    private readonly Queue<IEvent> _events;
-    private readonly IAsyncEnumerable<IEvent> _eventsReceiver;
-    private readonly CancellationToken _cancelReciever;
     
+    //All received events
+    private readonly List<IEvent> _events;
     //materialized view with filtered IModifySubstanceAmountEvent-s
     private readonly List<IModifySubstanceAmountEvent> _substanceAmountEvents;
+
     public QueryService(IEventBusReceiver eventBus)
     {
         _eventBus = eventBus;
-        _eventsReceiver = _eventBus.GetEvents();
-        _events = new Queue<IEvent>();
-        _substanceAmountEvents = new List<IModifySubstanceAmountEvent>();
-        EventsReceiverProcedure();
+        //catch up all existing events from EventBus
+        _events = _eventBus.GetAllEvents();
+
+        // subscribe for new events
+        var eventsReceiver = _eventBus.EventsReceiver();
+        
+        // materialize view with necessary event types
+        _substanceAmountEvents = _events
+            .Select(x => x as IModifySubstanceAmountEvent)
+            .Where(x => x != null)
+            .ToList();
+        
+        //start incoming events processing
+        EventsReceiverProcedure(eventsReceiver);
     }
 
-    private void EventsReceiverProcedure()
+    private void EventsReceiverProcedure(IAsyncEnumerable<IEvent> eventsReceiver)
     {
         var receiverTask = Task.Run(async () =>
         {
-            await foreach (var receivedEvent in _eventsReceiver)
+            await foreach (var receivedEvent in eventsReceiver)
             {
                 lock (_events)
                 {
-                    _events.Enqueue(receivedEvent);                    
+                    _events.Add(receivedEvent);                    
                 }
 
                 var modifySubstanceAmountEvent = receivedEvent as IModifySubstanceAmountEvent;

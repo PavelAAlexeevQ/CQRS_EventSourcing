@@ -8,5 +8,6 @@ namespace CQRS_EventSourcing.EventBus.Interfaces;
 public interface IEventBusReceiver
 {
 // get all events by Query Service
-    IAsyncEnumerable<IEvent> GetEvents();
+    IAsyncEnumerable<IEvent> EventsReceiver();
+    List<IEvent> GetAllEvents();
 }

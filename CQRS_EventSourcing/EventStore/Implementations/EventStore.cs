@@ -15,12 +15,7 @@ public class EventStore : IEventStore
         _eventBus = eventBus;
     }
 
-
-    public ReadOnlyCollection<IEvent> EventList
-    {
-        get => _eventStore.AsReadOnly();
-    }
-
+    
     public void AddEvent(IEvent e)
     {
         _eventStore.Add(e);

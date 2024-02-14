@@ -1,4 +1,5 @@
-﻿using System.Threading.Channels;
+﻿using System.Collections.Generic;
+using System.Threading.Channels;
 using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
 
@@ -22,16 +23,17 @@ public class EventBus : IEventBusSender, IEventBusReceiver
     
     public void SendEvent(IEvent e)
     {
+        _eventQueue.Enqueue(e);
         _channel.Writer.WriteAsync(e);
     }
     
-    public IAsyncEnumerable<IEvent> GetEvents()
+    public IAsyncEnumerable<IEvent> EventsReceiver()
     {
         return _channel.Reader.ReadAllAsync();
     }
-
-    public Queue<IEvent> GetAllEvents()
+    
+    public List<IEvent> GetAllEvents()
     {
-        return _eventQueue;
+        return new List<IEvent>(_eventQueue);
     }
 }
