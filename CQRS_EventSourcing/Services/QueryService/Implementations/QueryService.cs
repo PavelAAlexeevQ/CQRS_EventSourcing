@@ -1,4 +1,5 @@
-﻿using CQRS_EventSourcing.EventBus.Interfaces;
+﻿using CQRS_EventSourcing.DomainModels;
+using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
 using CQRS_EventSourcing.Services.QueryService.Interfaces;
 
@@ -11,9 +12,16 @@ public class QueryService : IQueryService
     
     //All received events
     private readonly List<IEvent> _events;
-    //materialized view with filtered IModifySubstanceAmountEvent-s
-    private readonly List<IModifySubstanceAmountEvent> _substanceAmountEvents;
+    //materialized view with filtered IModifyReagentAmountEvent-s
+    private readonly List<IModifyReagentAmountEvent> _reagentAmountEvents;
 
+    //"streams" for different equipment types  
+    private readonly Dictionary<EquipmentTypes, List<IModifyReagentAmountEvent>> _reagentAmountEventsByEquipmentTypes;
+
+    //precalculated results for different equipment types  
+    private readonly Dictionary<EquipmentTypes, int> _reagentAmountByEquipmentTypes;
+
+    
     public QueryService(IEventBusReceiver eventBus)
     {
         _eventBus = eventBus;
@@ -24,11 +32,29 @@ public class QueryService : IQueryService
         var eventsReceiver = _eventBus.EventsReceiver();
         
         // materialize view with necessary event types
-        _substanceAmountEvents = _events
-            .Select(x => x as IModifySubstanceAmountEvent)
+        _reagentAmountEvents = _events
+            .Select(x => x as IModifyReagentAmountEvent)
             .Where(x => x != null)
             .ToList();
-        
+
+        _reagentAmountEventsByEquipmentTypes = new Dictionary<EquipmentTypes, List<IModifyReagentAmountEvent>>();
+        _reagentAmountByEquipmentTypes = new Dictionary<EquipmentTypes, int>();
+        foreach (var e in _reagentAmountEvents)
+        {
+            if(!_reagentAmountEventsByEquipmentTypes.ContainsKey((EquipmentTypes)e.EquipmentNum))
+            {
+                _reagentAmountEventsByEquipmentTypes[(EquipmentTypes)e.EquipmentNum] =
+                    new List<IModifyReagentAmountEvent>();
+            }
+            _reagentAmountEventsByEquipmentTypes[(EquipmentTypes)e.EquipmentNum].Add(e);
+
+            if(!_reagentAmountByEquipmentTypes.ContainsKey((EquipmentTypes)e.EquipmentNum))
+            {
+                _reagentAmountByEquipmentTypes[(EquipmentTypes)e.EquipmentNum] = 0;
+            }
+            _reagentAmountByEquipmentTypes[(EquipmentTypes)e.EquipmentNum] += e.Amount;
+        }
+            
         //start incoming events processing
         EventsReceiverProcedure(eventsReceiver);
     }
@@ -37,40 +63,75 @@ public class QueryService : IQueryService
     {
         var receiverTask = Task.Run(async () =>
         {
-            await foreach (var receivedEvent in eventsReceiver)
+            await foreach (var e in eventsReceiver)
             {
                 lock (_events)
                 {
-                    _events.Add(receivedEvent);                    
+                    _events.Add(e);
                 }
 
-                var modifySubstanceAmountEvent = receivedEvent as IModifySubstanceAmountEvent;
-                if (modifySubstanceAmountEvent != null)
+                var modifyReagentAmountEvent = e as IModifyReagentAmountEvent;
+                if (modifyReagentAmountEvent == null)
+                    continue;
+
+                lock (_reagentAmountEvents)
                 {
-                    lock (_substanceAmountEvents)
+                    _reagentAmountEvents.Add(modifyReagentAmountEvent);
+                }
+
+                lock (_reagentAmountEventsByEquipmentTypes)
+                {
+                    if (!_reagentAmountEventsByEquipmentTypes.ContainsKey(
+                            (EquipmentTypes)modifyReagentAmountEvent.EquipmentNum))
                     {
-                        _substanceAmountEvents.Add(modifySubstanceAmountEvent);
+                        _reagentAmountEventsByEquipmentTypes[(EquipmentTypes)modifyReagentAmountEvent.EquipmentNum] =
+                            new List<IModifyReagentAmountEvent>();
                     }
+
+                    _reagentAmountEventsByEquipmentTypes[(EquipmentTypes)modifyReagentAmountEvent.EquipmentNum]
+                        .Add(modifyReagentAmountEvent);
+                }
+
+                lock (_reagentAmountByEquipmentTypes)
+                {
+                    if (!_reagentAmountByEquipmentTypes.ContainsKey(
+                            (EquipmentTypes)modifyReagentAmountEvent.EquipmentNum))
+                    {
+                        _reagentAmountByEquipmentTypes[(EquipmentTypes)modifyReagentAmountEvent.EquipmentNum] = 0;
+                    }
+                    _reagentAmountByEquipmentTypes[(EquipmentTypes)modifyReagentAmountEvent.EquipmentNum] +=
+                        modifyReagentAmountEvent.Amount;
                 }
             }
         });
     }
     
-    public int GetLatestAmount()
+
+    public int GetLatestAmount(EquipmentTypes equipmentType)
     {
-        lock (_substanceAmountEvents)
+        lock (_reagentAmountByEquipmentTypes)
         {
-            return _substanceAmountEvents.Sum(x => x.Amount);
+            var containsKey = _reagentAmountByEquipmentTypes.TryGetValue(equipmentType, out var amount);
+            return containsKey ? amount : 0;
         }
     }
-
-    public int GetPrecessedAmountForPeriod(DateTime from, DateTime to)
+    
+    public int GetProcessedAmountForPeriod(ProcessedAmountRequest request)
     {
-        lock (_substanceAmountEvents)
+        lock (_reagentAmountEventsByEquipmentTypes)
         {
-            return _substanceAmountEvents.Where(x => x.Date >= from && x.Date <= to)
-                .Where(x => x.Amount < 0)
-                .Sum(x => x.Amount);
+            var containsKey = _reagentAmountEventsByEquipmentTypes.ContainsKey(request.EquipmentType);
+            if (containsKey)
+            {
+                return _reagentAmountEventsByEquipmentTypes[request.EquipmentType]
+                    .Where(x => x.Date >= request.FromDate && x.Date <= request.ToDate)
+                    .Where(x => x.Amount < 0)
+                    .Sum(x => x.Amount); 
+            }
+            else
+            {
+                return 0;
+            }
         }
     }
 }

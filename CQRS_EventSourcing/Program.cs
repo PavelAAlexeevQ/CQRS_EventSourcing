@@ -1,5 +1,5 @@
 ﻿using Autofac;
-
+using CQRS_EventSourcing.DomainModels;
 using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.EventBus.Implementations;
 using CQRS_EventSourcing.EventStore.Interfaces;
@@ -31,34 +31,61 @@ class CQRS_EventSourcingModel
 
             for (var i = 100; i > 0; i--)
             {
-                var amountDiff = rand.Next(1000) - 500;
-                commandService.SetAmountDiff(amountDiff, DateTime.Now.AddDays(-i));
+                var amount = rand.Next(1000) - 500;
+                var instrument = (EquipmentTypes)rand.Next((int)EquipmentTypes.Instrument2 + 1);
+
+                var experimentDetails = new ExperimentDetails()
+                {
+                    UsedAmount = amount,
+                    EquipmentType = instrument,
+                    ExperimentDate = DateTime.Now.AddDays(-i),
+                };
+                commandService.PerformExperiment(experimentDetails); 
+
+                amount = rand.Next(1000) - 500;
+                instrument = (EquipmentTypes)rand.Next((int)EquipmentTypes.Instrument2 + 1);
+                var reloadEquipmentDetails = new ReloadEquipmentDetails()
+                {
+                    AddedAmount = amount,
+                    EquipmentType = instrument,
+                    ReloadDate = DateTime.Now.AddDays(-i),
+                };
+                commandService.LoadInstrument(reloadEquipmentDetails);
             }
             // here is the first problem - virtual consistency.
             // As events goes from Storage to QueryService in async mode we shall wait a while
             // to have the latest updates in the QueryService  
-            Thread.Sleep(100);
+            Thread.Sleep(1000);
             
             // now let's query something 
-            var latestAmount = queryService.GetLatestAmount();
-            Console.WriteLine($"QueryService: Current amount of a substance is: {latestAmount}");
+            var latestAmount = queryService.GetLatestAmount(EquipmentTypes.Instrument1);
+            Console.WriteLine($"QueryService: Current amount of the reagent in {EquipmentTypes.Instrument1.ToString()} is: {latestAmount}");
+
+            var processedAmountRequest = new ProcessedAmountRequest
+            {
+                EquipmentType = EquipmentTypes.Instrument1,
+                FromDate = DateTime.Now.AddDays(-100),
+                ToDate = DateTime.Now
+            };
             var usedAmount =
-                Math.Abs(queryService.GetPrecessedAmountForPeriod(from: DateTime.Now.AddDays(-100), to: DateTime.Now));
-            Console.WriteLine($"QueryService: Used amount of a substance during last 100 days: {usedAmount}");
+                Math.Abs(queryService.GetProcessedAmountForPeriod(processedAmountRequest));
+            Console.WriteLine($"QueryService: Used amount of the reagent in {EquipmentTypes.Instrument1.ToString()} during last 100 days: {usedAmount}");
             
             //imagine we need one more query service. We may instantiate another one
             var queryServiceAnother = scope.Resolve<IQueryService>();
-            var latestAmountAnother = queryServiceAnother.GetLatestAmount();
-            Console.WriteLine($"Service(another): Current amount of a substance is: {latestAmountAnother}");
-            var usedAmountAnother =
-                Math.Abs(queryServiceAnother.GetPrecessedAmountForPeriod(from: DateTime.Now.AddDays(-100), to: DateTime.Now));
-            Console.WriteLine($"Service(another): Used amount of a substance during last 100 days: {usedAmountAnother}");
-
-            //check if both QueryServices works in the same way (but actually it is now guaranteed at all)
-            if (latestAmount != latestAmountAnother || usedAmount != usedAmountAnother)
+            var latestAmountAnother = queryServiceAnother.GetLatestAmount(EquipmentTypes.Instrument2);
+            Console.WriteLine($"Service(another): Current amount of the reagent is: {latestAmountAnother}");
+            
+            var processedAmountRequestAnother = new ProcessedAmountRequest
             {
-                Console.Error.WriteLine("Our proof of concept is failed :(");
-            }
+                EquipmentType = EquipmentTypes.Instrument2,
+                FromDate = DateTime.Now.AddDays(-100),
+                ToDate = DateTime.Now
+            };
+            var usedAmountAnother =
+                Math.Abs(queryServiceAnother.GetProcessedAmountForPeriod(processedAmountRequestAnother));
+            Console.WriteLine($"Service(another): Used amount of the reagent in {EquipmentTypes.Instrument2.ToString()} during last 100 days: {usedAmountAnother}");
+
         }
         
         return 0;

@@ -1,8 +1,15 @@
-﻿namespace CQRS_EventSourcing.Services.CommandService.Interfaces;
+﻿using CQRS_EventSourcing.DomainModels;
+
+
+namespace CQRS_EventSourcing.Services.CommandService.Interfaces;
 
 //Command Service
 public interface ICommandService
 {
-    //writes event for amount count modification (negative or positive) and date of the action
-    void SetAmountDiff(int amountDiff, DateTime actionDate);
+    //Perform experiment using requested equipment
+    void PerformExperiment(ExperimentDetails experimentDetails);
+    
+    //Load i.e. add some amount of reagent  
+    void LoadInstrument(ReloadEquipmentDetails experimentDetails);
+
 }
