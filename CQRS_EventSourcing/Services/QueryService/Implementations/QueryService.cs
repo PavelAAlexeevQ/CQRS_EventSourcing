@@ -18,7 +18,7 @@ public class QueryService : IQueryService
     //"streams" for different equipment types  
     private readonly Dictionary<EquipmentTypes, List<IModifyReagentAmountEvent>> _reagentAmountEventsByEquipmentTypes;
 
-    //precalculated results for different equipment types  
+    //precalculated last state for different equipment types  
     private readonly Dictionary<EquipmentTypes, int> _reagentAmountByEquipmentTypes;
 
     

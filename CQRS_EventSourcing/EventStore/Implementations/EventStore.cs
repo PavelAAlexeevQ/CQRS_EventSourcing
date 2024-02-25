@@ -5,12 +5,12 @@ using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventStore.Implementations;
 
-public class EventStore : IEventStore
+public class EventStoreImpl : IEventStore
 {
     private readonly IEventBusSender _eventBus;
     private readonly List<IEvent> _eventStore = new List<IEvent>();
     
-    public EventStore(IEventBusSender eventBus)
+    public EventStoreImpl(IEventBusSender eventBus)
     {
         _eventBus = eventBus;
     }

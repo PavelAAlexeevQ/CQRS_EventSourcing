@@ -1,17 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using CQRS_EventSourcing.EventBus.Interfaces;
 using CQRS_EventSourcing.Events.Interfaces;
 
 namespace CQRS_EventSourcing.EventBus.Implementations;
 
-public class EventBus : IEventBusSender, IEventBusReceiver
+public class EventBusImpl : IEventBusSender, IEventBusReceiver
 {
     private readonly Queue<IEvent> _eventQueue;
 
     private readonly Channel<IEvent> _channel;
     
-    public EventBus()
+    public EventBusImpl()
     {
         _eventQueue = new Queue<IEvent>();
         _channel = Channel.CreateUnbounded<IEvent>(options: new UnboundedChannelOptions()

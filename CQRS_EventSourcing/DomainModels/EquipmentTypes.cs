@@ -2,6 +2,6 @@
 
 public enum EquipmentTypes
 {
-    Instrument1 = 0,
-    Instrument2 = 1,
+    Instrument_1 = 0,
+    Instrument_2 = 1,
 }
